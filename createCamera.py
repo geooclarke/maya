@@ -7,11 +7,12 @@ def create_camera(name):
     camera_axis = ['X', 'Y']
     obj = cmds.ls(sl=True)[0]
     
+    
     # nested for loop to run through each attribute and lock accordingly
     for axis in camera_axis:
         for attr in camera_attrs:
             cmds.setAttr(obj+'.'+attr+axis, lock=1)
-    return
+    return name
 
 # define the function that will lock the attributes on the tilt group
 def lock_tilt_attrs(name):
@@ -44,20 +45,38 @@ def lock_crane_attrs(name):
 #define the group creation
 def create_grp(name):
     cmds.group(name=name) # indexing is so that it only selects the transform node
-    return
+    return name
 
 # creation of camera and groups, as well as locking values
-create_camera("rendercam")
-create_grp("tilt")
+cam = create_camera("camera_1")
+cam = cmds.ls(sl=True)[0]
+tilt_grp = create_grp(f"{cam}_tilt")
 lock_tilt_attrs((cmds.ls(sl=True)[0]))
-create_grp("crane")
+crane_grp = create_grp(f"{cam}_crane")
 lock_crane_attrs((cmds.ls(sl=True)[0]))
 
-# creating the distance dimensions
-cmds.distanceDimension( sp=(0, 0, 0), ep=(0, 0, 2) )
-cmds.move(0, 0, 0, "locator2")
-cmds.parent("locator1", "crane")
-cmds.parent("locator2", "rendercam1")
-cmds.rename("distanceDimension1", "DoF")
-cmds.expression(o = "rendercam1", s = "rendercamShape1.focusDistance = DoFShape.distance")
-cmds.parent("DoF", "crane")
+# new creation of the locators and distance object
+
+def createLocator(name):
+    name = name
+    cmds.spaceLocator(n=name)
+    return name
+
+loc_1 = createLocator(f"{cam}_DoF_loc_1")
+loc_2 = createLocator(f"{cam}_DoF_loc_2")
+
+cmds.move(0, 1, 0, loc_1)
+startPoint = cmds.getAttr(f"{loc_1}.translate")
+endPoint = cmds.getAttr(f"{loc_2}.translate")
+
+create_dist = cmds.distanceDimension(sp=startPoint[0], ep=endPoint[0])
+cmds.move(0, 0, 0, loc_1)
+distDimParent = cmds.listRelatives(create_dist, p=True)
+cmds.select(clear=True)
+distDimParent = cmds.rename(distDimParent, f"{cam}_DoF")
+# parenting to the main group
+cmds.parent(loc_2, cam)
+cmds.parent(loc_1, crane_grp)
+cmds.parent(distDimParent, crane_grp)
+
+cmds.expression(o = cam, s = (cam+".focusDistance = "+distDimParent+".distance"))
