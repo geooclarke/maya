@@ -1,7 +1,10 @@
+# simple code that will create a DoF expression that connects to a distanceDimension node with locators.
+# select the camera first and then run the code.
+
 import maya.cmds as cmds
 
-def createLocator():
-    name = "DoF_loc_#"
+def createLocator(cameraName):
+    name = f"{cameraName}_DoF_loc_#"
     locator = cmds.spaceLocator(n=name)
     return locator[0]
     
@@ -19,11 +22,12 @@ def lockAttrs(obj):
         
 selectedCam = cmds.ls(sl=True, dag=True)
 camShape = selectedCam[1]
+camName = selectedCam[0]
 print(selectedCam)
 print(camShape)
 # creation of the locators and distance object
-loc_1 = createLocator()
-loc_2 = createLocator()
+loc_1 = createLocator(camName)
+loc_2 = createLocator(camName)
 
 print(loc_1)
 cmds.move(0, 0, 1, loc_1, localSpace=True) # the distanceDimension won't work if the points are both on top of each other
@@ -33,7 +37,7 @@ endPoint = cmds.getAttr(f"{loc_2}.translate")
 create_dist = cmds.distanceDimension(sp=startPoint[0], ep=endPoint[0])
 distDimParent = cmds.listRelatives(create_dist, p=True)
 cmds.select(clear=True)
-distDimParent = cmds.rename(distDimParent, "DoF_#")
+distDimParent = cmds.rename(distDimParent, f"{camName}_DoF")
 
 # creating the expression connected to the original camera
 cmds.expression(s=f"{camShape}.focusDistance = {distDimParent}.distance")
