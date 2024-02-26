@@ -4,7 +4,8 @@ import maya.cmds as cmds
 
 #define camera creation function
 def create_camera():
-    create_rendercam = cmds.camera()
+    camName = input()
+    create_rendercam = cmds.camera(n=camName)
     camera_list = create_rendercam
     camera_attrs = ['translate', 'rotate']
     camera_axis = ['X', 'Y']
