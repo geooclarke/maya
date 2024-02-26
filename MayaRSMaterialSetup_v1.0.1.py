@@ -1,9 +1,13 @@
 import maya.cmds as cmds
 
+materialName = input("Assign a material name:")
+selectedObjects = cmds.ls(sl=True)
+
+
 # define the creation of the standard material
-def createStandardMaterial():
+def createStandardMaterial(name):
     materialList = []
-    materialCreation = cmds.shadingNode('RedshiftStandardMaterial', asShader=True)
+    materialCreation = cmds.shadingNode('RedshiftStandardMaterial', asShader=True, n=name)
     shadingGroup = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=f'{materialCreation}SG')
     cmds.connectAttr(f"{materialCreation}.outColor", f"{shadingGroup}.surfaceShader")
     materialList.append(materialCreation)
@@ -63,13 +67,13 @@ def normalNode():
     return bumpNode
     
 # creating the material node
-materialNode = createStandardMaterial()
+materialNode = createStandardMaterial(materialName)
 
 # creation of the file texture nodes
-baseColourFile = createTextureFile("baseColour#")
-roughnessFile = createTextureFile("roughness#", raw=True)
-normalFile = createTextureFile("normal#", raw=True)
-displacementFile = createTextureFile("displacement#", raw=True)
+baseColourFile = createTextureFile(f"{materialName}_baseColour#")
+roughnessFile = createTextureFile(f"{materialName}_roughness#", raw=True)
+normalFile = createTextureFile(f"{materialName}_normal#", raw=True)
+displacementFile = createTextureFile(f"{materialName}_displacement#", raw=True)
 # creating bump and displacement nodes
 bumpNode = normalNode()
 displacementNode = cmds.shadingNode("RedshiftDisplacement", asShader=True)
@@ -83,4 +87,6 @@ cmds.connectAttr(f"{roughnessFile}.outAlpha", f"{materialNode[0]}.refl_roughness
 cmds.connectAttr(f"{bumpNode}.out", f"{materialNode[0]}.bump_input")
 cmds.connectAttr(f"{displacementNode}.out", f"{materialNode[1]}.displacementShader")
 
-cmds.select(clear=True)
+for object in selectedObjects:
+    cmds.select(object)
+    cmds.hyperShade(assign=materialNode[0])
