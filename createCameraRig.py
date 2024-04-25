@@ -64,7 +64,7 @@ tilt_grp = create_grp(f"{camMain}_tilt")
 lock_tilt_attrs((cmds.ls(sl=True)[0]))
 crane_grp = create_grp(f"{camMain}_crane")
 lock_crane_attrs((cmds.ls(sl=True)[0]))
-
+    
 # creation of the locators and distance object
 loc_1 = createLocator(f"{camMain}_DoF_loc_1")
 loc_2 = createLocator(f"{camMain}_DoF_loc_2")
@@ -82,5 +82,6 @@ distDimParent = cmds.rename(distDimParent, f"{camMain}_DoF")
 cmds.parent(loc_2, camMain)
 cmds.parent(loc_1, crane_grp)
 cmds.parent(distDimParent, crane_grp)
+cmds.select(clear=True)
 
 cmds.expression(o=camMain, s=(f"{camMain}.focusDistance = {distDimParent}.distance"))
