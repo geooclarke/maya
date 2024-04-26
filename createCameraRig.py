@@ -5,18 +5,17 @@ class createWindow(object):
     # constructor
     def __init__(self):
         
-        self.cameraWindow = "Camera Window"
+        self.cameraWindow = "CameraWindow"
         self.title = "Camera Creator"
-        self.size = (300, 200)
+        self.size = (300, 50)
        
         #closing the old window
-        if cmds.window(myWindow, exists=True):
-            cmds.deleteUI(myWindow, window=True)
+        if cmds.window(self.cameraWindow, exists=True):
+            cmds.deleteUI(self.cameraWindow, window=True)
             
         #create new window
         self.myWindow = cmds.window(self.cameraWindow, title=self.title, widthHeight=self.size)
                 
-
         #define layout
         cmds.columnLayout(adjustableColumn=True)
         
@@ -119,7 +118,7 @@ class createWindow(object):
         
         cmds.expression(o=self.camMain, s=(f"{self.camMain}.focusDistance = {self.distDimParent}.distance"))
         
-        cmds.deleteUI(myWindow, window=True)
+        cmds.deleteUI(self.myWindow, window=True)
         
         return
         
