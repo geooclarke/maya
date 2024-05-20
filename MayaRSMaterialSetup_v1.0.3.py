@@ -1,34 +1,50 @@
+# things to add
+#    check box for if you want to assign the material to the selected object
+#    tick box for each file node to create, with all defaulting to on, apart from the displacement
+#    prefix for material naming convention
+#    better organised button layout
+#    ability to select specific maps and a UDIM tickbox
+#    ability to select multiple maps at once and a whole folder auto fill into correct boxes
+#    folder selection with auto detect map types
+#    error messages, such as if there isn't a material name, or missing map type
+
 import maya.cmds as cmds
 
 class createMaterialWindow(object):
     
-    #constructor
+    # constructor
     def __init__(self):
-        
-        self.materialWindow = "Material Creation"
+
+        self.materialWindow = "MaterialCreation"
         self.title = "Basic Redshift Material Creation"
-        self.size = (300, 50)
-       
-        #closing the old window
+        self.size = [300, 200]
+        
+        # closing the old window
         if cmds.window(self.materialWindow, exists=True):
             cmds.deleteUI(self.materialWindow, window=True)
             
-        #create new window
-        self.myWindow = cmds.window(self.materialWindow, title=self.title, widthHeight=self.size)
+        # create new window
+        self.myWindow = cmds.window(self.materialWindow, title=self.title, widthHeight=self.size, resizeToFitChildren=True)
                 
         #define layout
         cmds.columnLayout(adjustableColumn=True)
         
-        #adding UI
+        # adding UI
         cmds.text(self.title)
         cmds.separator(height=20)
         
         self.materialName = cmds.textFieldGrp(label="Material Name:")
-        self.createCamBtn = cmds.button("Create Material", command=self.materialCreation)
+        self.buttonRow = cmds.rowLayout(numberOfColumns=3, columnWidth=((1, 100), (2, 100), (3, 800)))
+        self.createMatBtnAndClose = cmds.button("Create and Close", parent=self.buttonRow, command=self.materialAndClose)
+        self.createCamBtn = cmds.button("Create Material", command=self.materialCreation, parent=self.buttonRow)
+        self.createCloseBtn = cmds.button("Close", parent=self.buttonRow, command=self.closeWindow)
         
-        #display new window
+        # display new window
         cmds.showWindow()
         
+    def closeWindow(self, *args):
+        cmds.deleteUI(self.materialWindow, window=True)
+        return
         
     def materialCreation(self, *args):
         
@@ -38,7 +54,7 @@ class createMaterialWindow(object):
         # define the creation of the standard material
         def createStandardMaterial(self, name, *args):
             self.materialList = []
-            self.materialCreation = cmds.shadingNode('RedshiftStandardMaterial', asShader=True, n=self.materialCustomName)
+            self.materialCreation = cmds.shadingNode('RedshiftStandardMaterial', asShader=True, name=self.materialCustomName)
             self.shadingGroup = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=f'{self.materialCreation}SG')
             cmds.connectAttr(f"{self.materialCreation}.outColor", f"{self.shadingGroup}.surfaceShader")
             self.materialList.append(self.materialCreation)
@@ -119,10 +135,13 @@ class createMaterialWindow(object):
         cmds.connectAttr(f"{self.bumpNode}.out", f"{self.materialNode[0]}.bump_input")
         cmds.connectAttr(f"{self.displacementNode}.out", f"{self.materialNode[1]}.displacementShader")
         
-        
-        if len(selectedObjects) > 0:
-            for object in selectedObjects:
+        if len(self.selectedObjects) > 0:
+            for object in self.selectedObjects:
                 cmds.select(object)
-                cmds.hyperShade(assign=materialNode[0])
-                    
+                cmds.hyperShade(assign=self.materialNode[0])
+                
+    def materialAndClose(self, *args):
+        self.materialCreation()
+        self.closeWindow()
+        
 GC_materialWindow = createMaterialWindow()
