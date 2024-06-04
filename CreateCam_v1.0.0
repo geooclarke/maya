@@ -1,39 +1,77 @@
-import maya.cmds as cmds
+# CreateCam_v1.0.0
+# features to add:   Create camera and close when hitting enter when on line edit
+#                    Bug where the full shape node name is propogated through to the rest of the select camera hierarchy
 
-class createWindow(object):
+try:
+    from PySide2 import QtWidgets
+    from PySide2 import QtCore
+    from shiboken2 import wrapInstance
+except:
+    from PySide6 import QtWidgets
+    from PySide6 import QtCore
+    from shiboken6 import wrapInstance
+
+import maya.OpenMayaUI as omui
+
+# converting the maya main window as a python object in order to keep the new window on top.
+# notice it is defined above the class method
+def maya_main_window():
+    main_window_ptr = omui.MQtUtil.mainWindow()
+    return wrapInstance(int(main_window_ptr), QtWidgets.QWidget)
+
+
+class GCCreateCamWindow(QtWidgets.QDialog):
     
-    # constructor
-    def __init__(self):
+    def __init__(self, parent=maya_main_window()):
+        super().__init__(parent)
         
-        self.cameraWindow = "CameraWindow"
-        self.title = "Camera Creator"
-        self.size = (300, 50)
-       
-        #closing the old window
-        if cmds.window(self.cameraWindow, exists=True):
-            cmds.deleteUI(self.cameraWindow, window=True)
-            
-        #create new window
-        self.myWindow = cmds.window(self.cameraWindow, title=self.title, widthHeight=self.size)
-                
-        #define layout
-        cmds.columnLayout(adjustableColumn=True)
+        self.setWindowTitle("Create Camera")
+        self.setMinimumSize(400, 90)
         
-        #adding UI
-        cmds.text(self.title)
-        cmds.separator(height=20)
+        self.create_widgets()
+        self.create_layouts()
+        self.create_connections()
         
-        self.camName = cmds.textFieldGrp(label="Camera Name:")
-        self.createCamBtn = cmds.button("Create Camera", command=self.createCamera)
         
-        #display new window
-        cmds.showWindow()
+    def create_widgets(self):
+        self.camera_name_le = QtWidgets.QLineEdit()
         
-
+        self.create_camera_btn = QtWidgets.QPushButton("Create Camera")
+        self.create_camera_and_close_btn = QtWidgets.QPushButton("Create and Close")
+        self.cancel_btn = QtWidgets.QPushButton("Cancel")
         
-    # main camera method
+    def create_layouts(self):
+        self.name_layout = QtWidgets.QFormLayout()
+        self.name_layout.addRow("Camera Name: ", self.camera_name_le)
+        
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.button_layout.addWidget(self.create_camera_and_close_btn)
+        self.button_layout.addWidget(self.create_camera_btn)
+        self.button_layout.addWidget(self.cancel_btn)
+        
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setSpacing(2)
+        self.main_layout.setContentsMargins(5, 5, 5, 5)
+        self.main_layout.addLayout(self.name_layout)
+        self.main_layout.addStretch()
+        self.main_layout.addLayout(self.button_layout)
+        
+    def create_connections(self):
+        
+        # buttons
+        self.create_camera_and_close_btn.clicked.connect(self.createAndClose)
+        self.create_camera_btn.clicked.connect(self.createCamera)
+        self.cancel_btn.clicked.connect(self.close)
+        
+    def get_camera_name(self):
+        return(self.camera_name_le.text())
+    
+# main camera method
     def createCamera(self, *args):
-        self.camName = cmds.textFieldGrp(self.camName, query=True, text=True)
+        self.camName = self.get_camera_name()
+        
+        if not self.camName:
+            self.camName = "camera"
         
         def create_camera():
             self.name = self.camName
@@ -44,7 +82,7 @@ class createWindow(object):
             self.obj = cmds.ls(sl=True)
             
             
-            # nested for loop to run through each attribute and lock accordingly
+            # run through each attribute and lock accordingly
             for axis in self.camera_axis:
                 for attr in self.camera_attrs:
                     cmds.setAttr(f"{self.obj[0]}.{attr}{axis}", lock=1)
@@ -56,7 +94,7 @@ class createWindow(object):
             tilt_attrs = ["translate", "rotate", "scale"]
             obj = cmds.ls(sl=True)[0]
             
-            # nested for loop, same as the for loop above, but running through a couple if statements to skip the rotate x attribute
+            # skipping the X axis to avoid locking
             for axis in tilt_axis:
                 if axis != "X":
                     for attr in tilt_attrs:
@@ -115,11 +153,19 @@ class createWindow(object):
         cmds.parent(self.distDimParent, self.crane_grp)
         cmds.select(clear=True)
         
-        
         cmds.expression(o=self.camMain, s=(f"{self.camMain}.focusDistance = {self.distDimParent}.distance"))
-        
-        cmds.deleteUI(self.myWindow, window=True)
         
         return
         
-GC_cameraWindow = createWindow()
+    def createAndClose(self):
+        self.createCamera()
+        self.close()    
+    
+if __name__ == "__main__":
+    try:
+        win.close()        # pylint: disable=E0601
+        win.deleteLater()
+    except:
+        pass
+    win = GCCreateCamWindow()
+    win.show()
