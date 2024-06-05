@@ -1,6 +1,7 @@
-# CreateCam_v1.0.0
+# CreateCam_v1.0.1
 # features to add:   Create camera and close when hitting enter when on line edit
-#                    Bug where the full shape node name is propogated through to the rest of the select camera hierarchy
+#                    If setting suffix manually, the code to recognise this and not add an extra suffix
+#                    Controls to make it a bit more user friendly
 
 try:
     from PySide2 import QtWidgets
@@ -70,22 +71,22 @@ class GCCreateCamWindow(QtWidgets.QDialog):
     def createCamera(self, *args):
         self.camName = self.get_camera_name()
         
-        if not self.camName:
-            self.camName = "camera"
-        
-        def create_camera():
-            self.name = self.camName
-            self.create_rendercam = cmds.camera(n=self.camName)
-            self.camera_list = self.create_rendercam
+        def create_camera(camera_name):
+            self.create_rendercam = cmds.camera()
+            if len(camera_name) > 0:
+                self.rename_cam = cmds.rename(self.create_rendercam[0], f"{camera_name}#")
+                
+            self.cam_main = cmds.ls(sl=True)
+            self.camera_shape = cmds.listRelatives(self.cam_main, children=True)
+            self.camera_list = [self.cam_main[0], self.camera_shape[0]]
+            print(f"self.camera_list: {self.camera_list}")
             self.camera_attrs = ['translate', 'rotate']
             self.camera_axis = ['X', 'Y']
-            self.obj = cmds.ls(sl=True)
-            
             
             # run through each attribute and lock accordingly
             for axis in self.camera_axis:
                 for attr in self.camera_attrs:
-                    cmds.setAttr(f"{self.obj[0]}.{attr}{axis}", lock=1)
+                    cmds.setAttr(f"{self.camera_list[0]}.{attr}{axis}", lock=1)
             return self.camera_list
         
         # define the function that will lock the attributes on the tilt group
@@ -127,7 +128,7 @@ class GCCreateCamWindow(QtWidgets.QDialog):
             cmds.spaceLocator(n=name)
             return name
         
-        self.cam = create_camera()
+        self.cam = create_camera(self.camName)
         self.camMain = self.cam[0]
         self.tilt_grp = create_grp(f"{self.camMain}_tilt")
         lock_tilt_attrs((cmds.ls(sl=True)[0]))
@@ -148,10 +149,11 @@ class GCCreateCamWindow(QtWidgets.QDialog):
         self.distDimParent = cmds.rename(self.distDimParent, f"{self.camMain}_DoF")
         
         # parenting to the main group
-        cmds.parent(self.loc_2, self.camMain)
+        cmds.parent(self.loc_2, self.tilt_grp)
         cmds.parent(self.loc_1, self.crane_grp)
         cmds.parent(self.distDimParent, self.crane_grp)
         cmds.select(clear=True)
+        cmds.parentConstraint(self.camMain, self.loc_2)
         
         cmds.expression(o=self.camMain, s=(f"{self.camMain}.focusDistance = {self.distDimParent}.distance"))
         
