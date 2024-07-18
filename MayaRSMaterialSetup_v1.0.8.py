@@ -1,3 +1,7 @@
+# MayaRSMaterialSetup_v1.0.8
+# fixed double underscore big in naming convention
+# fixed broken UDIM checkbox issue where UDIMs were on regardless of checkbox state
+
 try:
     # Qt5
     from PySide2 import QtCore
@@ -27,11 +31,11 @@ class MainToolWindow(QtWidgets.QDialog):
     image_filters = "tif (*.tif *.tiff);; png (*.png);; \
     jpeg (*.jpeg *.jpg *.jp2);; exr (*.exr);; hdr (*.hdr);; tga (*.tga)"
     
-    base_colour_filters = ["diffuse", "base_colour"]
+    base_colour_filters = ["diffuse", "base_colour", "albedo", "baseColour", "base_color", "baseColor"]
     metallic_filters = ["metallic", "metalness"]
-    roughness_filters = ["roughness"]
+    roughness_filters = ["roughness", "Roughness"]
     normal_filters = ["normal", "bump"]
-    displacement_filters = ["displacement", "height"]
+    displacement_filters = ["displacement", "height", "DisplaceHeightField"]
     
     selected_filter = "Images ( )"
     
@@ -63,7 +67,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         self.base_colour_cb = QtWidgets.QCheckBox()
         self.base_colour_cb.setChecked(True)
-        self.base_colour_fp = QtWidgets.QLineEdit()
+        self.base_colour_le = QtWidgets.QLineEdit()
         self.base_colour_UDIM_cb = QtWidgets.QCheckBox("UDIM")
         self.base_colour_btn = QtWidgets.QPushButton()
         self.base_colour_btn.setToolTip("Select File")
@@ -71,7 +75,7 @@ class MainToolWindow(QtWidgets.QDialog):
                 
         self.metallic_cb = QtWidgets.QCheckBox()
         self.metallic_cb.setChecked(True)
-        self.metallic_fp = QtWidgets.QLineEdit()
+        self.metallic_le = QtWidgets.QLineEdit()
         self.metallic_UDIM_cb = QtWidgets.QCheckBox("UDIM")
         self.metallic_btn = QtWidgets.QPushButton()
         self.metallic_btn.setToolTip("Select File")
@@ -79,7 +83,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         self.roughness_cb = QtWidgets.QCheckBox()
         self.roughness_cb.setChecked(True)
-        self.roughness_fp = QtWidgets.QLineEdit()
+        self.roughness_le = QtWidgets.QLineEdit()
         self.roughness_UDIM_cb = QtWidgets.QCheckBox("UDIM")
         self.roughness_btn = QtWidgets.QPushButton()
         self.roughness_btn.setToolTip("Select File")
@@ -87,7 +91,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         self.normal_cb = QtWidgets.QCheckBox()
         self.normal_cb.setChecked(True)
-        self.normal_fp = QtWidgets.QLineEdit()
+        self.normal_le = QtWidgets.QLineEdit()
         self.normal_UDIM_cb = QtWidgets.QCheckBox("UDIM")
         self.normal_btn = QtWidgets.QPushButton()
         self.normal_btn.setToolTip("Select File")
@@ -95,7 +99,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         self.displacement_cb = QtWidgets.QCheckBox()
         self.displacement_cb.setChecked(True)
-        self.displacement_fp = QtWidgets.QLineEdit()
+        self.displacement_le = QtWidgets.QLineEdit()
         self.displacement_UDIM_cb = QtWidgets.QCheckBox("UDIM")
         self.displacement_btn = QtWidgets.QPushButton()
         self.displacement_btn.setToolTip("Select File")
@@ -121,21 +125,22 @@ class MainToolWindow(QtWidgets.QDialog):
         top_button_layout.addWidget(self.select_multiple_files_btn)
         
         base_colour_layout_top = QtWidgets.QHBoxLayout()
+        base_colour_layout_top.setSpacing(0)
         base_colour_layout_top.addWidget(self.base_colour_cb)
-        base_colour_layout_top.addWidget(self.base_colour_fp)
+        base_colour_layout_top.addWidget(self.base_colour_le)
         base_colour_layout_top.addWidget(self.base_colour_btn)
         
         base_colour_layout_bot = QtWidgets.QHBoxLayout()
         base_colour_layout_bot.addWidget(self.base_colour_UDIM_cb)
         
         base_colour_layout = QtWidgets.QFormLayout()
-        base_colour_layout.setHorizontalSpacing(0)
+        base_colour_layout.setSpacing(2)
         base_colour_layout.addRow(base_colour_layout_top)
         base_colour_layout.addRow(base_colour_layout_bot)
         
         metallic_layout_top = QtWidgets.QHBoxLayout()
         metallic_layout_top.addWidget(self.metallic_cb)
-        metallic_layout_top.addWidget(self.metallic_fp)
+        metallic_layout_top.addWidget(self.metallic_le)
         metallic_layout_top.addWidget(self.metallic_btn)
         
         metallic_layout_bot = QtWidgets.QHBoxLayout()
@@ -147,7 +152,7 @@ class MainToolWindow(QtWidgets.QDialog):
 
         roughness_layout_top = QtWidgets.QHBoxLayout()
         roughness_layout_top.addWidget(self.roughness_cb)
-        roughness_layout_top.addWidget(self.roughness_fp)
+        roughness_layout_top.addWidget(self.roughness_le)
         roughness_layout_top.addWidget(self.roughness_btn)
         
         roughness_layout_bot = QtWidgets.QHBoxLayout()
@@ -159,7 +164,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         normal_layout_top = QtWidgets.QHBoxLayout()
         normal_layout_top.addWidget(self.normal_cb)
-        normal_layout_top.addWidget(self.normal_fp)
+        normal_layout_top.addWidget(self.normal_le)
         normal_layout_top.addWidget(self.normal_btn)
         
         normal_layout_bot = QtWidgets.QHBoxLayout()
@@ -171,7 +176,7 @@ class MainToolWindow(QtWidgets.QDialog):
         
         displacement_layout_top = QtWidgets.QHBoxLayout()
         displacement_layout_top.addWidget(self.displacement_cb)
-        displacement_layout_top.addWidget(self.displacement_fp)
+        displacement_layout_top.addWidget(self.displacement_le)
         displacement_layout_top.addWidget(self.displacement_btn)
         
         displacement_layout_bot = QtWidgets.QHBoxLayout()
@@ -185,7 +190,6 @@ class MainToolWindow(QtWidgets.QDialog):
         global_options_layout.addWidget(self.assign_obj_cb)
         
         button_layout = QtWidgets.QHBoxLayout()
-        #button_layout.addStretch()
         button_layout.addWidget(self.create_and_close_btn)
         button_layout.addWidget(self.create_material_btn)
         button_layout.addWidget(self.close_btn)
@@ -200,6 +204,7 @@ class MainToolWindow(QtWidgets.QDialog):
         form_layout.addRow("Displacement: ", displacement_layout)
         
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setSpacing(2)
         main_layout.addLayout(form_layout)
         main_layout.addStretch()
         main_layout.addLayout(global_options_layout)
@@ -232,23 +237,23 @@ class MainToolWindow(QtWidgets.QDialog):
     # defining the various checkboxes    
         
     def update_base_colour_visibility(self, checked):
-        self.base_colour_fp.setEnabled(checked)
+        self.base_colour_le.setEnabled(checked)
         self.base_colour_btn.setEnabled(checked)
         
     def update_metallic_visibility(self, checked):
-        self.metallic_fp.setEnabled(checked)
+        self.metallic_le.setEnabled(checked)
         self.metallic_btn.setEnabled(checked)
         
     def update_roughness_visibility(self, checked):
-        self.roughness_fp.setEnabled(checked)
+        self.roughness_le.setEnabled(checked)
         self.roughness_btn.setEnabled(checked)
         
     def update_normal_visibility(self, checked):
-        self.normal_fp.setEnabled(checked)
+        self.normal_le.setEnabled(checked)
         self.normal_btn.setEnabled(checked)
         
     def update_displacement_visibility(self, checked):
-        self.displacement_fp.setEnabled(checked)
+        self.displacement_le.setEnabled(checked)
         self.displacement_btn.setEnabled(checked)
         
 # methods for the file opening boxes for each map type. I'm sure this can be done in 1 method...
@@ -260,35 +265,35 @@ class MainToolWindow(QtWidgets.QDialog):
         # below makes sure code is run just in case user closed dialog box
         if file_path:
             # adding the returned file path to the line edit
-            self.base_colour_fp.setText(file_path)
+            self.base_colour_le.setText(file_path)
             
     def show_file_select_metallic(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
         self, "Select File", "", self.FILE_FILTERS, self.selected_filter)
         
         if file_path:
-            self.metallic_fp.setText(file_path)
+            self.metallic_le.setText(file_path)
             
     def show_file_select_roughness(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
         self, "Select File", "", self.FILE_FILTERS, self.selected_filter)
         
         if file_path:
-            self.roughness_fp.setText(file_path)
+            self.roughness_le.setText(file_path)
             
     def show_file_select_normal(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
         self, "Select File", "", self.FILE_FILTERS, self.selected_filter)
         
         if file_path:
-            self.normal_fp.setText(file_path)
+            self.normal_le.setText(file_path)
             
     def show_file_select_displacement(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
         self, "Select File", "", self.FILE_FILTERS, self.selected_filter)
         
         if file_path:
-            self.displacement_fp.setText(file_path)
+            self.displacement_le.setText(file_path)
     
     # top buttons for quick assignment
     
@@ -307,6 +312,7 @@ class MainToolWindow(QtWidgets.QDialog):
                 if len(located_file) == 1:
                     mapType.setText(f"{self.directory}/{located_file[0]}")
                 elif len(located_file) > 1:
+                    
                     print(f"More than 1 file located: {located_file}")
             else:
                 if len(located_file) == 1:
@@ -320,6 +326,8 @@ class MainToolWindow(QtWidgets.QDialog):
         def folder_popup(self):
             dir = QtWidgets.QFileDialog.getExistingDirectory(
             self, "Select Folder", self.defaultFolder)
+            if dir:
+                self.defaultFolder = dir
             files = ""
             
             if dir:
@@ -334,41 +342,41 @@ class MainToolWindow(QtWidgets.QDialog):
         self.defined_files, self.directory = folder_popup(self)
         
         base_colour_assign = self.file_scanner(self.directory, 
-            self.base_colour_filters, self.defined_files, self.base_colour_fp)
+            self.base_colour_filters, self.defined_files, self.base_colour_le)
             
         metallic_assign = self.file_scanner(self.directory, 
-            self.metallic_filters, self.defined_files, self.metallic_fp)
+            self.metallic_filters, self.defined_files, self.metallic_le)
             
         roughness_assign = self.file_scanner(self.directory, 
-            self.roughness_filters, self.defined_files, self.roughness_fp)
+            self.roughness_filters, self.defined_files, self.roughness_le)
         
         normal_assign = self.file_scanner(self.directory, 
-            self.normal_filters, self.defined_files, self.normal_fp)
+            self.normal_filters, self.defined_files, self.normal_le)
             
         displacement_assign = self.file_scanner(self.directory, 
-            self.displacement_filters, self.defined_files, self.displacement_fp)
+            self.displacement_filters, self.defined_files, self.displacement_le)
 
     def select_multiple_files(self):
         file_paths, self.selected_filter = QtWidgets.QFileDialog.getOpenFileNames(
         self, "Select Files", self.defaultFolder, self.FILE_FILTERS, self.selected_filter)
         
-        self.directory = "None"
+        self.directory = ""
         self.defined_files = file_paths
         
         base_colour_assign = self.file_scanner(self.directory, 
-            self.base_colour_filters, self.defined_files, self.base_colour_fp, folder=False)
+            self.base_colour_filters, self.defined_files, self.base_colour_le, folder=False)
             
         metallic_assign = self.file_scanner(self.directory, 
-            self.metallic_filters, self.defined_files, self.metallic_fp, folder=False)
+            self.metallic_filters, self.defined_files, self.metallic_le, folder=False)
             
         roughness_assign = self.file_scanner(self.directory, 
-            self.roughness_filters, self.defined_files, self.roughness_fp, folder=False)
+            self.roughness_filters, self.defined_files, self.roughness_le, folder=False)
             
         normal_assign = self.file_scanner(self.directory, 
-            self.normal_filters, self.defined_files, self.normal_fp, folder=False)
+            self.normal_filters, self.defined_files, self.normal_le, folder=False)
             
         displacement_assign = self.file_scanner(self.directory, 
-            self.displacement_filters, self.defined_files, self.displacement_fp, folder=False)
+            self.displacement_filters, self.defined_files, self.displacement_le, folder=False)
         
         print(file_paths)
     
@@ -382,19 +390,19 @@ class MainToolWindow(QtWidgets.QDialog):
     # retrieving the selected file names ready to be input into the file nodes 
     
     def base_colour_file_path(self):
-        return(self.base_colour_fp.text())
+        return(self.base_colour_le.text())
         
     def metallic_file_path(self):
-        return(self.metallic_fp.text())
+        return(self.metallic_le.text())
         
     def roughness_file_path(self):
-        return(self.roughness_fp.text())
+        return(self.roughness_le.text())
         
     def normal_file_path(self):
-        return(self.normal_fp.text())
+        return(self.normal_le.text())
         
     def displacement_file_path(self):
-        return(self.displacement_fp.text())
+        return(self.displacement_le.text())
 
     
     ####################################
@@ -412,7 +420,7 @@ class MainToolWindow(QtWidgets.QDialog):
         if len(self.materialCustomSuffix) == 0:
             self.materialCustomSuffix = ""
             
-        self.full_name = f"{self.materialCustomPrefix}_{self.materialCustomSuffix}#"
+        self.full_name = f"{self.materialCustomPrefix}{self.materialCustomSuffix}#"
         print(self.full_name)
         
         # creating variabvles for each file path
@@ -440,6 +448,7 @@ class MainToolWindow(QtWidgets.QDialog):
                 self.fileName = self.materialCustomPrefix
                 self.fileNode = cmds.shadingNode('file', asTexture=True, name=f"{self.materialCustomPrefix}_{self.mapType}_#")
                 cmds.setAttr(f"{self.fileNode}.filterType", False)
+                cmds.setAttr(f"{self.fileNode}.uvTilingMode", 0)
                 return self.fileNode
         
             def create_place2dNode(self):
@@ -466,14 +475,15 @@ class MainToolWindow(QtWidgets.QDialog):
                 cmds.connectAttr(f'{self.place2dNode}.outUV', f'{self.fileNode}.uv')
                 cmds.connectAttr(f'{self.place2dNode}.outUvFilterSize', f'{self.fileNode}.uvFilterSize')
             
+               
+            self.create2dNode = create_place2dNode(self)
+            self.createFile = createFileNode(self)
+            
             if raw:
                 cmds.setAttr(f"{self.createFile}.ignoreColorSpaceFileRules", 1)
                 cmds.setAttr(f"{self.createFile}.colorSpace", "Raw", type="string")
                 cmds.setAttr(f"{self.createFile}.alphaIsLuminance", 1)
-                
-            self.create2dNode = create_place2dNode(self)
-            self.createFile = createFileNode(self)
-            
+
             attachFileNodeToPlace2d(self, self.create2dNode, self.createFile)
             
             return self.createFile
@@ -487,43 +497,43 @@ class MainToolWindow(QtWidgets.QDialog):
             
         # creating main node structure based on the tickbox
         self.materialNode = createStandardMaterial(self)
-        if self.base_colour_cb.isChecked():
+        if self.base_colour_cb.isChecked() and len(self.base_colour_le.text()) > 0:
             self.baseColourFile = createTextureFile(self, "base_colour")
             cmds.setAttr(f"{self.baseColourFile}.fileTextureName", f"{self.base_colour_file}", type="string")
             cmds.connectAttr(f"{self.baseColourFile}.outColor", f"{self.materialNode[0]}.base_color")
-            if self.base_colour_UDIM_cb.clicked:
+            if self.base_colour_UDIM_cb.isChecked():
                 cmds.setAttr(f"{self.baseColourFile}.uvTilingMode", 3)
             
-        if self.metallic_cb.isChecked():
-            self.metallicFile = createTextureFile(self, "metallic")
+        if self.metallic_cb.isChecked() and len(self.metallic_le.text()) > 0:
+            self.metallicFile = createTextureFile(self, "metallic", raw=True)
             cmds.setAttr(f"{self.metallicFile}.fileTextureName", f"{self.metallic_file}", type="string")
             cmds.connectAttr(f"{self.metallicFile}.outAlpha", f"{self.materialNode[0]}.metalness")
-            if self.metallic_UDIM_cb.clicked:
+            if self.metallic_UDIM_cb.isChecked():
                 cmds.setAttr(f"{self.metallicFile}.uvTilingMode", 3)
             
-        if self.roughness_cb.isChecked():
+        if self.roughness_cb.isChecked() and len(self.roughness_le.text()) > 0:
             self.roughnessFile = createTextureFile(self, "roughness", raw=True)
             cmds.setAttr(f"{self.roughnessFile}.fileTextureName", f"{self.roughness_file}", type="string")
             cmds.connectAttr(f"{self.roughnessFile}.outAlpha", f"{self.materialNode[0]}.refl_roughness")
-            if self.roughness_UDIM_cb.clicked:
+            if self.roughness_UDIM_cb.isChecked():
                 cmds.setAttr(f"{self.roughnessFile}.uvTilingMode", 3)
             
-        if self.normal_cb.isChecked():
+        if self.normal_cb.isChecked() and len(self.normal_le.text()) > 0:
             self.normalFile = createTextureFile(self, "normal", raw=True)
             cmds.setAttr(f"{self.normalFile}.fileTextureName", f"{self.normal_file}", type="string")
             self.bumpNode = normalNode(self)
             cmds.connectAttr(f"{self.normalFile}.outColor", f"{self.bumpNode}.input")
             cmds.connectAttr(f"{self.bumpNode}.out", f"{self.materialNode[0]}.bump_input")
-            if self.normal_UDIM_cb.clicked:
+            if self.normal_UDIM_cb.isChecked():
                 cmds.setAttr(f"{self.normalFile}.uvTilingMode", 3)
             
-        if self.displacement_cb.isChecked():
+        if self.displacement_cb.isChecked() and len(self.displacement_le.text()) > 0:
             self.displacementFile = createTextureFile(self, "displacement", raw=True)
             cmds.setAttr(f"{self.displacementFile}.fileTextureName", f"{self.displacement_file}", type="string")
             self.displacementNode = cmds.shadingNode("RedshiftDisplacement", asShader=True)
             cmds.connectAttr(f"{self.displacementFile}.outColor", f"{self.displacementNode}.texMap")
             cmds.connectAttr(f"{self.displacementNode}.out", f"{self.materialNode[1]}.displacementShader")
-            if self.displacement_UDIM_cb.clicked:
+            if self.displacement_UDIM_cb.isChecked():
                 cmds.setAttr(f"{self.displacementFile}.uvTilingMode", 3)
         
         if self.assign_obj_cb.isChecked():
