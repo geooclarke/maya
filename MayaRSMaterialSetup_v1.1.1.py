@@ -1,6 +1,26 @@
-# MayaRSMaterialSetup_v1.0.8
-# fixed double underscore big in naming convention
-# fixed broken UDIM checkbox issue where UDIMs were on regardless of checkbox state
+# MayaRSMaterialSetup_v1.1.1
+# added a few more keywords to the filters to increase the chance of textures getting picked up straight away
+# to do: 
+#       add case sensitive option (off by default
+#       add tab for adding and removing extra keywords
+#       add new words to material creation script - ao, diff, disp, nor, rough
+#       add a tickbox for switching between glossiness workflow
+#       make the search paths include and not just exsclusively be the common phrases
+#       all other common texture files as well. (emission, SSS, transmission, opacity)
+#       multiple tabs in the UI, one for settings with keywords etc
+#       tickbox for all maps that will hide or unhide selected map types
+#       spit out all the files that weren't on that list and make sure they get sent back to the user in a new window for them to assign seperately
+#       drag and drop functionality
+#       rework it so that all extra options will open and close in a sort of dropdown fashion
+#       when multiple files get linked to the same map, assign them to a list and open a new window indicating this. Allow the user to select one of these maps to move on
+#       side tab for files that haven't been assigned to anything
+#       button to toggle apply suffix to all nodes
+#       figure out how to compress down the methods for the file opening boxes to 1 method
+#       have a folder remembering function on the select multiple files button
+#       remembering check state of tick boxes
+#       could I condense the main file widgets down into a single method?
+#       tick box to toggle projection type
+#       add more shader options such as arnold
 
 try:
     # Qt5
@@ -18,7 +38,6 @@ except:
 import sys
 import maya.OpenMayaUI as omui
     
-    
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(int(main_window_ptr), QtWidgets.QWidget)
@@ -31,11 +50,12 @@ class MainToolWindow(QtWidgets.QDialog):
     image_filters = "tif (*.tif *.tiff);; png (*.png);; \
     jpeg (*.jpeg *.jpg *.jp2);; exr (*.exr);; hdr (*.hdr);; tga (*.tga)"
     
-    base_colour_filters = ["diffuse", "base_colour", "albedo", "baseColour", "base_color", "baseColor"]
-    metallic_filters = ["metallic", "metalness"]
-    roughness_filters = ["roughness", "Roughness"]
-    normal_filters = ["normal", "bump"]
-    displacement_filters = ["displacement", "height", "DisplaceHeightField"]
+    base_colour_filters = ["diffuse", "Diffuse", "base_colour", "albedo", "Albedo", "baseColour", "base_color", "baseColor", "BaseColour"]
+    metallic_filters = ["metallic", "metalness", "Metalness", "Metallic"]
+    roughness_filters = ["roughness", "Roughness", "Reflection", "reflection", ]
+    normal_filters = ["normal", "bump", "Normal", "Bump"]
+    opacity_filters = ["opacity", "Opacity"]
+    displacement_filters = ["displacement", "Displacement", "height", "Height", "DisplaceHeightField"]
     
     selected_filter = "Images ( )"
     
@@ -88,6 +108,14 @@ class MainToolWindow(QtWidgets.QDialog):
         self.roughness_btn = QtWidgets.QPushButton()
         self.roughness_btn.setToolTip("Select File")
         self.roughness_btn.setIcon(QtGui.QIcon(":fileOpen.png"))
+        
+        self.opacity_cb = QtWidgets.QCheckBox()
+        self.opacity_cb.setChecked(True)
+        self.opacity_le = QtWidgets.QLineEdit()
+        self.opacity_UDIM_cb = QtWidgets.QCheckBox("UDIM")
+        self.opacity_btn = QtWidgets.QPushButton()
+        self.opacity_btn.setToolTip("Select File")
+        self.opacity_btn.setIcon(QtGui.QIcon(":fileOpen.png"))
         
         self.normal_cb = QtWidgets.QCheckBox()
         self.normal_cb.setChecked(True)
@@ -162,6 +190,20 @@ class MainToolWindow(QtWidgets.QDialog):
         roughness_layout.addRow(roughness_layout_top)
         roughness_layout.addRow(roughness_layout_bot)
         
+        opacity_layout_top = QtWidgets.QHBoxLayout()
+        opacity_layout_top.setSpacing(0)
+        opacity_layout_top.addWidget(self.opacity_cb)
+        opacity_layout_top.addWidget(self.opacity_le)
+        opacity_layout_top.addWidget(self.opacity_btn)
+        
+        opacity_layout_bot = QtWidgets.QHBoxLayout()
+        opacity_layout_bot.addWidget(self.opacity_UDIM_cb)
+        
+        opacity_layout = QtWidgets.QFormLayout()
+        opacity_layout.setSpacing(2)
+        opacity_layout.addRow(opacity_layout_top)
+        opacity_layout.addRow(opacity_layout_bot)
+        
         normal_layout_top = QtWidgets.QHBoxLayout()
         normal_layout_top.addWidget(self.normal_cb)
         normal_layout_top.addWidget(self.normal_le)
@@ -200,6 +242,7 @@ class MainToolWindow(QtWidgets.QDialog):
         form_layout.addRow("Base Colour:", base_colour_layout)
         form_layout.addRow("Metallic: ", metallic_layout)
         form_layout.addRow("Roughness: ", roughness_layout)
+        form_layout.addRow("Opacity: ", opacity_layout)
         form_layout.addRow("Normal: ", normal_layout)
         form_layout.addRow("Displacement: ", displacement_layout)
         
@@ -219,6 +262,7 @@ class MainToolWindow(QtWidgets.QDialog):
         self.base_colour_btn.clicked.connect(self.show_file_select_base_colour)
         self.metallic_btn.clicked.connect(self.show_file_select_metallic)
         self.roughness_btn.clicked.connect(self.show_file_select_roughness)
+        self.opacity_btn.clicked.connect(self.show_file_select_opacity)
         self.normal_btn.clicked.connect(self.show_file_select_normal)
         self.displacement_btn.clicked.connect(self.show_file_select_displacement)
         
@@ -226,6 +270,7 @@ class MainToolWindow(QtWidgets.QDialog):
         self.base_colour_cb.toggled.connect(self.update_base_colour_visibility)
         self.metallic_cb.toggled.connect(self.update_metallic_visibility)
         self.roughness_cb.toggled.connect(self.update_roughness_visibility)
+        self.opacity_cb.toggled.connect(self.update_opacity_visibility)
         self.normal_cb.toggled.connect(self.update_normal_visibility)
         self.displacement_cb.toggled.connect(self.update_displacement_visibility)
         
@@ -247,6 +292,10 @@ class MainToolWindow(QtWidgets.QDialog):
     def update_roughness_visibility(self, checked):
         self.roughness_le.setEnabled(checked)
         self.roughness_btn.setEnabled(checked)
+        
+    def update_opacity_visibility(self, checked):
+        self.opacity_le.setEnabled(checked)
+        self.opacity_btn.setEnabled(checked)
         
     def update_normal_visibility(self, checked):
         self.normal_le.setEnabled(checked)
@@ -280,6 +329,13 @@ class MainToolWindow(QtWidgets.QDialog):
         
         if file_path:
             self.roughness_le.setText(file_path)
+            
+    def show_file_select_opacity(self):
+        file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
+        self, "Select File", "", self.FILE_FILTERS, self.selected_filter)
+        
+        if file_path:
+            self.opacity_le.setText(file_path)
             
     def show_file_select_normal(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
@@ -349,6 +405,9 @@ class MainToolWindow(QtWidgets.QDialog):
             
         roughness_assign = self.file_scanner(self.directory, 
             self.roughness_filters, self.defined_files, self.roughness_le)
+            
+        opacity_assign = self.file_scanner(self.directory, 
+            self.opacity_filters, self.defined_files, self.opacity_le)
         
         normal_assign = self.file_scanner(self.directory, 
             self.normal_filters, self.defined_files, self.normal_le)
@@ -371,6 +430,9 @@ class MainToolWindow(QtWidgets.QDialog):
             
         roughness_assign = self.file_scanner(self.directory, 
             self.roughness_filters, self.defined_files, self.roughness_le, folder=False)
+            
+        opacity_assign = self.file_scanner(self.directory, 
+            self.opacity_filters, self.defined_files, self.opacity_le, folder=False)
             
         normal_assign = self.file_scanner(self.directory, 
             self.normal_filters, self.defined_files, self.normal_le, folder=False)
@@ -397,6 +459,9 @@ class MainToolWindow(QtWidgets.QDialog):
         
     def roughness_file_path(self):
         return(self.roughness_le.text())
+        
+    def opacity_file_path(self):
+        return(self.opacity_le.text())
         
     def normal_file_path(self):
         return(self.normal_le.text())
@@ -456,24 +521,24 @@ class MainToolWindow(QtWidgets.QDialog):
                 return self.place2dNode
    
             def attachFileNodeToPlace2d(self, place2dNode, fileNode):
-                cmds.connectAttr(f'{self.place2dNode}.coverage', f'{self.fileNode}.coverage')
-                cmds.connectAttr(f'{self.place2dNode}.translateFrame', f'{self.fileNode}.translateFrame')
-                cmds.connectAttr(f'{self.place2dNode}.rotateFrame', f'{self.fileNode}.rotateFrame')
-                cmds.connectAttr(f'{self.place2dNode}.mirrorU', f'{self.fileNode}.mirrorU')
-                cmds.connectAttr(f'{self.place2dNode}.mirrorV', f'{self.fileNode}.mirrorV')
-                cmds.connectAttr(f'{self.place2dNode}.stagger', f'{self.fileNode}.stagger')
-                cmds.connectAttr(f'{self.place2dNode}.wrapU', f'{self.fileNode}.wrapU')
-                cmds.connectAttr(f'{self.place2dNode}.wrapV', f'{self.fileNode}.wrapV')
-                cmds.connectAttr(f'{self.place2dNode}.repeatUV', f'{self.fileNode}.repeatUV')
-                cmds.connectAttr(f'{self.place2dNode}.offset', f'{self.fileNode}.offset')
-                cmds.connectAttr(f'{self.place2dNode}.rotateUV', f'{self.fileNode}.rotateUV')
-                cmds.connectAttr(f'{self.place2dNode}.noiseUV', f'{self.fileNode}.noiseUV')
-                cmds.connectAttr(f'{self.place2dNode}.vertexUvOne', f'{self.fileNode}.vertexUvOne')
-                cmds.connectAttr(f'{self.place2dNode}.vertexUvTwo', f'{self.fileNode}.vertexUvTwo')
-                cmds.connectAttr(f'{self.place2dNode}.vertexUvThree', f'{self.fileNode}.vertexUvThree')
-                cmds.connectAttr(f'{self.place2dNode}.vertexCameraOne', f'{self.fileNode}.vertexCameraOne')
-                cmds.connectAttr(f'{self.place2dNode}.outUV', f'{self.fileNode}.uv')
-                cmds.connectAttr(f'{self.place2dNode}.outUvFilterSize', f'{self.fileNode}.uvFilterSize')
+                cmds.connectAttr(f"{self.place2dNode}.coverage", f"{self.fileNode}.coverage")
+                cmds.connectAttr(f"{self.place2dNode}.translateFrame", f"{self.fileNode}.translateFrame")
+                cmds.connectAttr(f"{self.place2dNode}.rotateFrame", f"{self.fileNode}.rotateFrame")
+                cmds.connectAttr(f"{self.place2dNode}.mirrorU", f"{self.fileNode}.mirrorU")
+                cmds.connectAttr(f"{self.place2dNode}.mirrorV", f"{self.fileNode}.mirrorV")
+                cmds.connectAttr(f"{self.place2dNode}.stagger", f"{self.fileNode}.stagger")
+                cmds.connectAttr(f"{self.place2dNode}.wrapU", f"{self.fileNode}.wrapU")
+                cmds.connectAttr(f"{self.place2dNode}.wrapV", f"{self.fileNode}.wrapV")
+                cmds.connectAttr(f"{self.place2dNode}.repeatUV", f"{self.fileNode}.repeatUV")
+                cmds.connectAttr(f"{self.place2dNode}.offset", f"{self.fileNode}.offset")
+                cmds.connectAttr(f"{self.place2dNode}.rotateUV", f"{self.fileNode}.rotateUV")
+                cmds.connectAttr(f"{self.place2dNode}.noiseUV", f"{self.fileNode}.noiseUV")
+                cmds.connectAttr(f"{self.place2dNode}.vertexUvOne", f"{self.fileNode}.vertexUvOne")
+                cmds.connectAttr(f"{self.place2dNode}.vertexUvTwo", f"{self.fileNode}.vertexUvTwo")
+                cmds.connectAttr(f"{self.place2dNode}.vertexUvThree", f"{self.fileNode}.vertexUvThree")
+                cmds.connectAttr(f"{self.place2dNode}.vertexCameraOne", f"{self.fileNode}.vertexCameraOne")
+                cmds.connectAttr(f"{self.place2dNode}.outUV", f"{self.fileNode}.uv")
+                cmds.connectAttr(f"{self.place2dNode}.outUvFilterSize", f"{self.fileNode}.uvFilterSize")
             
                
             self.create2dNode = create_place2dNode(self)
