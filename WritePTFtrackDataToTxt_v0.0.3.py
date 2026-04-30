@@ -1,6 +1,7 @@
 import maya.cmds as cmds
 import os
 
+
 # user defined attributes
 
 uncertainty_value_default = 3
@@ -64,3 +65,6 @@ for locator in selected_markers:
     file_create.write("\n")
     
 file_create.close()
+
+file_written_message = f"The .txt file has been successfully written here: \n {file_name_path}"
+cmds.confirmDialog(title="Text Output File", message=file_written_message, button="OK", icon="information")
