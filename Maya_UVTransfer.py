@@ -1,4 +1,6 @@
-## v0.1 - Select the source object first and then follow with at least one item after this.
+# Maya_UVTransfer v0.0.1 
+# Very quickly transfer UV shells from one mesh to multiple ones without affecting transform history. 
+# Select the source object first and then follow with at least one item after this.
 
 import maya.cmds as cmds
 import maya.OpenMaya as om
