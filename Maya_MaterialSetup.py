@@ -1,13 +1,13 @@
-# MayaRSMaterialSetup_v1.1.1
+# MayaRSMaterialSetup_v1.1.4
 # added a few more keywords to the filters to increase the chance of textures getting picked up straight away
 # to do: 
-#       add case sensitive option (off by default
+#       add case-sensitive option (off by default)
 #       add tab for adding and removing extra keywords
 #       add new words to material creation script - ao, diff, disp, nor, rough
 #       add a tickbox for switching between glossiness workflow
-#       make the search paths include and not just exsclusively be the common phrases
+#       make the search paths include and not just exclusively be the common phrases
 #       all other common texture files as well. (emission, SSS, transmission, opacity)
-#       multiple tabs in the UI, one for settings with keywords etc
+#       multiple tabs in the UI, one for settings with keywords etc.
 #       tickbox for all maps that will hide or unhide selected map types
 #       spit out all the files that weren't on that list and make sure they get sent back to the user in a new window for them to assign seperately
 #       drag and drop functionality
@@ -34,7 +34,8 @@ except:
     from PySide6 import QtWidgets
     from PySide6 import QtGui
     from shiboken6 import wrapInstance
-    
+
+import maya.cmds as cmds
 import sys
 import maya.OpenMayaUI as omui
     
@@ -50,12 +51,12 @@ class MainToolWindow(QtWidgets.QDialog):
     image_filters = "tif (*.tif *.tiff);; png (*.png);; \
     jpeg (*.jpeg *.jpg *.jp2);; exr (*.exr);; hdr (*.hdr);; tga (*.tga)"
     
-    base_colour_filters = ["diffuse", "Diffuse", "base_colour", "albedo", "Albedo", "baseColour", "base_color", "baseColor", "BaseColour"]
+    base_colour_filters = ["diffuse", "Diffuse", "base_colour", "albedo", "Albedo", "baseColour", "base_color", "baseColor", "BaseColour", "diff"]
     metallic_filters = ["metallic", "metalness", "Metalness", "Metallic"]
-    roughness_filters = ["roughness", "Roughness", "Reflection", "reflection", ]
-    normal_filters = ["normal", "bump", "Normal", "Bump"]
+    roughness_filters = ["roughness", "Roughness", "Reflection", "reflection", "rough"]
+    normal_filters = ["normal", "bump", "Normal", "Bump", "nor"]
     opacity_filters = ["opacity", "Opacity"]
-    displacement_filters = ["displacement", "Displacement", "height", "Height", "DisplaceHeightField"]
+    displacement_filters = ["displacement", "Displacement", "height", "Height", "DisplaceHeightField", "disp"]
     
     selected_filter = "Images ( )"
     
@@ -79,6 +80,11 @@ class MainToolWindow(QtWidgets.QDialog):
         self.create_connections()
             
     def create_widgets(self):
+        """ This creates all the widgets required for the UI.
+
+            Returns:
+
+        """
         self.material_prefix_le = QtWidgets.QLineEdit()
         self.material_suffix_le = QtWidgets.QLineEdit("_mat")
         
@@ -140,6 +146,11 @@ class MainToolWindow(QtWidgets.QDialog):
         self.close_btn = QtWidgets.QPushButton("Close")
         
     def create_layouts(self):
+        """ This creates all the layouts for the UI.
+
+            Returns:
+                Does not need to return anything given its use case.
+        """
         material_prefix_layout = QtWidgets.QHBoxLayout()
         material_prefix_layout.addWidget(self.material_prefix_le)
         material_suffix_layout = QtWidgets.QHBoxLayout()
@@ -254,6 +265,11 @@ class MainToolWindow(QtWidgets.QDialog):
         main_layout.addLayout(button_layout)
         
     def create_connections(self):
+        """  This creates all the connections which enables the functionality of the UI user inputs.
+
+            Returns:
+                Does not return anything given the nature of the function.
+        """
         # top buttons
         self.select_folder_btn.clicked.connect(self.select_folder)
         self.select_multiple_files_btn.clicked.connect(self.select_multiple_files)
@@ -305,7 +321,7 @@ class MainToolWindow(QtWidgets.QDialog):
         self.displacement_le.setEnabled(checked)
         self.displacement_btn.setEnabled(checked)
         
-# methods for the file opening boxes for each map type. I'm sure this can be done in 1 method...
+# function for the file opening boxes for each map type. I'm sure this can be done in 1 function...
         
     def show_file_select_base_colour(self):
         file_path, self.selected_filter = QtWidgets.QFileDialog.getOpenFileName(
@@ -616,10 +632,10 @@ class MainToolWindow(QtWidgets.QDialog):
         
 if __name__ == "__main__":
     try:
-        win.close()        # pylint: disable=E0601
-        win.deleteLater()
+        RSMat_Create.close()        # pylint: disable=E0601
+        RSMat_Create.deleteLater()
     except:
         pass
-        
-    win = MainToolWindow()
-    win.show()
+
+    RSMat_Create = MainToolWindow()
+    RSMat_Create.show()
