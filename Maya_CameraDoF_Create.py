@@ -1,3 +1,4 @@
+# Maya_CameraDoF_Create v0.0.3
 # simple code that will create a DoF expression that connects to a distanceDimension node with locators.
 # select the camera first and then run the code.
 
