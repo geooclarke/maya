@@ -1,7 +1,7 @@
-# CreateCam_v1.0.1
+# Maya_CreateCam_v1.0.1.py
 # features to add:   Create camera and close when hitting enter when on line edit
 #                    If setting suffix manually, the code to recognise this and not add an extra suffix
-#                    Controls to make it a bit more user friendly
+#                    Nurbs curves as controls to make it a bit more user friendly
 
 try:
     from PySide2 import QtWidgets
