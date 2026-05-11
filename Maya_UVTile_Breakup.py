@@ -1,5 +1,5 @@
+# Maya_UV_TileBreakup v0.0.1
 # this will create a maxon noise node for controlling the tile offset on a file texture node. Really useful for breaking up a repeating pattern
-
 # select the place 2d nodes that you want to plug the maxon noise node into 
 # then run script
 
